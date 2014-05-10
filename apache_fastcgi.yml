@@ -1,0 +1,13 @@
+---
+- name: Install Apache with mod_fastcgi 
+  hosts: all
+  user: root
+  # remote_user: 
+  sudo: yes
+  gather_facts: True
+
+- name: Install apache with mod_fastcgi 
+  hosts: web
+  roles:
+    - apache_fastcgi
+

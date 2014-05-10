@@ -1,0 +1,38 @@
+---
+- name: Check for gcc
+  shell: rpm -q gcc
+  register: check_gcc
+  ignore_errors: True
+
+- name: Install the prerequsites 
+  yum: name={{ item }} state=present
+  with_items:
+    - gcc
+    - httpd-devel
+    - rpm-build
+
+- name: Create fasctgi folder
+  command: mkdir -p ~/fastcgi
+
+- name: Download Nexcess mod_fastcgi src.rpm
+  get_url: url=http://pubfiles.nexcess.net/misc/mod_fastcgi-2.4.6-3.el6.src.rpm dest=~/fastcgi
+
+- name: Compile mod_fastcgi
+  command: chdir=~/fastcgi rpmbuild --rebuild mod_fastcgi-2.4.6-3.el6.src.rpm
+
+- name: Install mod_fastcgi
+  yum: name=/root/rpmbuild/RPMS/{{ ansible_machine }}/mod_fastcgi-2.4.6-3.el6.{{ ansible_machine }}.rpm state=present
+
+- name: Copy fastcgi example
+  template: src=fastcgi.conf dest=/etc/httpd/conf.d/fastcgi.conf backup=yes owner=root mode=0644
+
+- name: Remove mod_fastcgi.conf 
+  command: rm -f /etc/httpd/conf.d/mod_fastcgi.conf
+
+- name: Remove fasctgi folder
+  command: rm -rf ~/fastcgi
+
+- name: Remove gcc if not installed before
+  yum: name=gcc state=absent
+  when: check_gcc|failed
+
